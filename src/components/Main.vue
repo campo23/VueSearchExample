@@ -15,49 +15,27 @@
           </span>
         </div>
         <div>
-          <span class="bold">Total Likes:</span>
-          {{likes.count}}
-          <span class="bold">Hits:</span>
-          {{likes.hit}}
+          <span class="bold">Cerca le tue bustine!</span>
         </div>
-        <div>
+        <!--<div>
           <b-form-select @input="sort()" v-model="search.filter" :options="options"/>
-        </div>
+        </div>-->
       </div>
     </div>
 
     <div class="container-fluid">
       <div class="row">
-        <div class="col-md-6 pad-15-ver card" v-for="wonder in wonders_data" :key="wonder.id">
+        <div class="col-md-6 pad-15-ver card" v-for="gioco in giocos_data" :key="gioco.id_bgg">
           <div
             class="card-inner"
-            @mouseover="show_hover(true,wonder.id)"
+            @mouseover="show_hover(true,gioco.id_bgg)"
             @mouseout="show_hover(false,0)"
           >
-            <img class="card-img" :src="wonder.imageURL">
+            <!--<img class="card-img" :src="gioco.imageURL">-->
 
-            <div class="card-bottom pad-15-hor" v-show="!hover_flag || active_id != wonder.id">
-              <div class="min-width-160">
-                <span class="bold">Ratings:</span>
-                <star-rating
-                  :rating="wonder.ratings"
-                  :show-rating="false"
-                  :inline="true"
-                  :star-size="15"
-                ></star-rating>
-              </div>
-              <div class="max-width-160">
-                <span class="bold">{{wonder.place}}</span>
-              </div>
-            </div>
-
-            <div :class="{'card-hover':1}" v-show="hover_flag && active_id == wonder.id">
-              <span
-                @click="make_active(wonder.id)"
-                :class="{'fas':1, 'fa-heart':1, 'absolute-star':1, 'green':check_active(wonder.id)}"
-              >{{wonder.likes}}</span>
-              <h5>{{wonder.place}}</h5>
-              <p>{{wonder.description}}</p>
+            <div :class="{'card-hover':1}" v-show="hover_flag && active_id == gioco.id_bgg">
+              <h5>{{gioco.nome}}</h5>
+              <p>{{gioco.versione}}</p>
             </div>
           </div>
         </div>
@@ -79,41 +57,41 @@ export default {
     var inside = this;
 
     axios
-      .get("https://www.mocky.io/v2/5c7b98562f0000c013e59f07")
+      .get("http://localhost:5000/get_all_sleeves")
       .then(function(response) {
-        //console.log(response);
+        console.log(response);
 
-        inside.wonders_data_actual = response.data.data;
+        inside.bustine_gioco = response.data.result;
 
-        response.data.data.map(function(wonder) {
-          inside.likes.count += wonder.likes;
-        });
+        /*response.data.result.map(function(gioco) {
+          inside.likes.count += gioco.likes;
+        });*/
 
-        inside.wonders_data_actual = inside.wonders_data_actual.map(function(
-          wonder
+        /*inside.bustine_gioco = inside.bustine_gioco.map(function(
+          gioco
         ) {
-          wonder.active_like = false;
-          return wonder;
-        });
-        inside.wonders_data = response.data.data;
+          gioco.active_like = false;
+          return gioco;
+        });*/
+        inside.giocos_data = response.data.result;
       })
       .catch(function(error) {
-        // console.log(error);
+        console.log(error);
       });
   },
   data() {
     return {
       hover_flag: false,
-      wonders_data_actual: [],
-      wonders_data: [],
-      active_id: 0,
-      options: [
+      bustine_gioco: [],
+      giocos_data: [],
+      active_id: 0
+      /*options: [
         { value: null, text: "Sort By" },
         { value: "a", text: "Ratings" },
         { value: "b", text: "Likes" }
-      ],
-      search: { filter: null, text: "" },
-      likes: { count: 0, hit: 0 }
+      ],*/
+      //search: { filter: null, text: "" }
+      //likes: { count: 0, hit: 0 }
     };
   },
   methods: {
@@ -124,10 +102,10 @@ export default {
     sort() {
       //console.log(this.search.filter);
       this.search.filter == "b"
-        ? this.wonders_data.sort(function(a, b) {
+        ? this.giocos_data.sort(function(a, b) {
             return b.likes - a.likes;
           })
-        : this.wonders_data.sort(function(a, b) {
+        : this.giocos_data.sort(function(a, b) {
             return b.ratings - a.ratings;
           });
     },
@@ -136,40 +114,40 @@ export default {
 
       var inside = this;
 
-      this.wonders_data = this.wonders_data_actual.filter(function(wonder) {
+      this.giocos_data = this.bustine_gioco.filter(function(gioco) {
         if (
-          wonder.place
+          gioco.nome
             .toLowerCase()
             .indexOf(inside.search.text.toLowerCase()) != "-1"
         ) {
-          return wonder;
+          return gioco;
         }
       });
     },
     check_active(id) {
       var flag = false;
-      this.wonders_data_actual.map(function(wonder) {
-        if (wonder.id == id) {
-          flag = wonder.active_like;
+      this.bustine_gioco.map(function(gioco) {
+        if (gioco.id == id) {
+          flag = gioco.active_like;
         }
       });
       return flag;
     },
     make_active(id) {
       this.likes.hit++;
-      this.wonders_data_actual = this.wonders_data_actual.map(function(wonder) {
-        if (wonder.id == id) {
-          wonder.active_like = !wonder.active_like;
-          wonder.active_like ? wonder.likes++ : wonder.likes--;
+      this.bustine_gioco = this.bustine_gioco.map(function(gioco) {
+        if (gioco.id == id) {
+          gioco.active_like = !gioco.active_like;
+          gioco.active_like ? gioco.likes++ : gioco.likes--;
         }
 
-        return wonder;
+        return gioco;
       });
       var inside = this;
 
       inside.likes.count = 0;
-      this.wonders_data_actual.map(function(wonder) {
-        inside.likes.count += wonder.likes;
+      this.bustine_gioco.map(function(gioco) {
+        inside.likes.count += gioco.likes;
       });
     }
   },
